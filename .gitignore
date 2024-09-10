@@ -1,2 +1,5 @@
 # Exclude VS Code files
 .vscode/
+logs/
+build/
+objects/

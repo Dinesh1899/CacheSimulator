@@ -1,43 +1,29 @@
-CC = g++
-OPT = -O3
-#OPT = -g
-WARN = -Wall
-CFLAGS = $(OPT) $(WARN) $(INC) $(LIB)
+# Define the compiler
+CXX = g++
 
-# List all your .cpp files here (source files, excluding header files)
-SIM_SRC = cache_sim.cpp
+# Define the target executable
+TARGET_DIR=build
+TARGET = $(TARGET_DIR)/hello
 
-# List corresponding compiled object files here (.o files)
-SIM_OBJ = cache_sim.o
- 
-#################################
+# Define the source file
+SRC = src/hello.cpp
 
-# default rule
+# Define the object file
+OBJ_DIR = objects
+OBJ = $(OBJ_DIR)/hello.o
 
-all: cache_sim
-	@echo "my work is done here..."
+# Default target
+all: $(TARGET)
+	./$(TARGET)
 
+# Rule to build the target executable
+$(TARGET): $(OBJ)
+	$(CXX) -o $(TARGET) $(OBJ)
 
-# rule for making cache_sim
+# Rule to build the object file
+$(OBJ): $(SRC)
+	$(CXX) -c $(SRC) -o $(OBJ)
 
-sim_cache: $(SIM_OBJ)
-	$(CC) -o cache_sim $(CFLAGS) $(SIM_OBJ) -lm
-	@echo "-----------DONE WITH CACHE_SIM-----------"
-
-
-# generic rule for converting any .cc file to any .o file
- 
-.cc.o:
-	$(CC) $(CFLAGS)  -c $*.cc
-
-
-# type "make clean" to remove all .o files plus the cache_sim binary
-
+# Clean up generated files
 clean:
-	rm -f *.o cache_sim
-
-
-# type "make clobber" to remove all .o files (leaves cache_sim binary)
-
-clobber:
-	rm -f *.o
+	rm -rf $(TARGET_DIR)/* $(OBJ_DIR)/*
