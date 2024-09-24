@@ -1,5 +1,8 @@
+#include <stdio.h>
 #include <assert.h>
 #include <cstring>
+
+using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////
 // If return value is >0, CACTI failed on this cache configuration.
@@ -10,7 +13,7 @@ int get_cacti_results(unsigned int SIZE, unsigned int BLOCKSIZE, unsigned int AS
 	char command[128];
 	FILE *pipe;
 
-        char buffer[128];
+    char buffer[128];
 	char *substring;
 	float Height, Width;
 
@@ -69,5 +72,5 @@ int get_cacti_results(unsigned int SIZE, unsigned int BLOCKSIZE, unsigned int AS
 	/////////////////////////////////////////////////////////
 	pclose(pipe);
 
-	return(errflag);
+	return (errflag);
 }
