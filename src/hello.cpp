@@ -14,10 +14,11 @@ int main(){
 	//cout<<"Num is: "<<num<<endl;
 	//cout<<"Size of int is: "<<sizeof(int)<<endl;
 
-	cout<<extractBits(6, 0, 0)<<endl; // 6 -> 110 
+	//cout<<extractBits(6, 0, 0)<<endl; // 6 -> 110 
 
-	//CACHEMEMORY *L1 = new CACHEMEMORY(64, 8, 2, 0);
-	//L1->show();
+	CACHEMEMORY *L1 = new CACHEMEMORY(64, 16, 2, 0);
+
+	L1->show();
 	// vector<int> vec;
 	// vec.push_back(52);
 	// vec.push_back(72);

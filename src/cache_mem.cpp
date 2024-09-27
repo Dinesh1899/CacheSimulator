@@ -3,6 +3,7 @@
 #include <set>
 #include <vector>
 #include <math.h>
+#include <vector>
 
 using namespace std;
 
@@ -15,27 +16,20 @@ struct CACHEBLOCK
     bool is_dirty;
     int counter; // LRU Counter
 
-};
-
-
-struct CACHE_BLOCK_COMPARATOR
-{
-    /* data */
-    bool operator()(const CACHEBLOCK& lhs, const CACHEBLOCK& rhs) const {
-        if(lhs.counter != rhs.counter){
-            return lhs.counter < rhs.counter;
-        }else{
-            return lhs.tag < rhs.tag;
-        }
+    bool operator==(const CACHEBLOCK& cb) const
+    {
+        return (this->tag == cb.tag);
     }
+
 };
+
 
 class CACHEMEMORY
 {
 private:
     /* data */
     // Map index -> Set of CACHEBLOCKS
-    vector<set<CACHEBLOCK, CACHE_BLOCK_COMPARATOR>> cache;
+    vector<vector<CACHEBLOCK>> cache;
     set<CACHEBLOCK>* vc;
     CACHEMEMORY* next_mem;
 
@@ -60,6 +54,7 @@ public:
     void set_masks(int blocksize, int num_sets);
     int get_mask(int right, int left);
     int get_masked_data(int addr, int mask, int right);
+    CACHEBLOCK get_read_block(int addr);
     void show();
 
     bool read_request(int addr);
@@ -75,13 +70,13 @@ CACHEMEMORY::CACHEMEMORY(int size, int blocksize, int assoc, int vc_blocks){
     set_masks(blocksize, num_sets);
     
     for(int i=0;i<num_sets;i++){
-        set<CACHEBLOCK, CACHE_BLOCK_COMPARATOR> cache_set;
+        vector<CACHEBLOCK> cache_set;
         for(int j=0;j<assoc;j++){
             CACHEBLOCK block;
             block.tag = j;
             block.is_valid = false;
             
-            cache_set.insert(block);
+            cache_set.push_back(block);
         }
         this->cache.push_back(cache_set);
     } 
