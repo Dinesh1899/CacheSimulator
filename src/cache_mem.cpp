@@ -6,9 +6,6 @@
 
 using namespace std;
 
-
-
-
 struct CACHEBLOCK
 {
     /* data */
@@ -46,6 +43,11 @@ private:
     unsigned int tag_mask;
     unsigned int block_offset_mask;
 
+    unsigned int tag_bits_length;
+    unsigned int index_bits_length;
+    unsigned int block_offset_bits_length;
+
+
 public:
     static const int ADDR_LENGTH = 32;
     CACHEMEMORY(/* args */);
@@ -57,7 +59,10 @@ public:
     void set_block_offset_mask(int block_offset_length);
     void set_masks(int blocksize, int num_sets);
     int get_mask(int right, int left);
+    int get_masked_data(int addr, int mask, int right);
     void show();
+
+    bool read_request(int addr);
 };
 
 CACHEMEMORY::CACHEMEMORY(){}
@@ -75,7 +80,7 @@ CACHEMEMORY::CACHEMEMORY(int size, int blocksize, int assoc, int vc_blocks){
             CACHEBLOCK block;
             block.tag = j;
             block.is_valid = false;
-            //cout<<"Set "<<i<<" Block:"<<j<<endl;
+            
             cache_set.insert(block);
         }
         this->cache.push_back(cache_set);
@@ -101,6 +106,10 @@ void CACHEMEMORY::set_masks(int blocksize, int num_sets){
     int index_length = log2(num_sets);
     int tag_length = ADDR_LENGTH - index_length - block_offset_length;
 
+    this->tag_bits_length = tag_length;
+    this->index_bits_length = index_length;
+    this->block_offset_bits_length = block_offset_length;
+
     set_block_offset_mask(block_offset_length);
     set_index_mask(index_length, block_offset_length);
     set_tag_mask(tag_length);
@@ -121,4 +130,18 @@ void CACHEMEMORY::set_tag_mask(int tag_length){
 
 int CACHEMEMORY::get_mask(int right, int left){
     return ((1 << (left - right + 1)) - 1) << right;
+}
+
+int test_mask(int right, int left){
+    return ((1 << (left - right + 1)) - 1) << right;
+}
+
+int main(){
+
+    int num = 0xeff5;
+    int mask = test_mask(1,2);
+    int res = (num & mask) >> 1;
+    cout<<"Mask is: "<<mask<<endl;
+    cout<<"Result is: "<<res<<endl;
+    return 0;
 }
