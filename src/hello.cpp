@@ -22,6 +22,8 @@ int main(){
 
 	//cout<<extractBits(6, 0, 0)<<endl; // 6 -> 110 
 
+	CACHEMEMORY *L1 = new CACHEMEMORY(512, 16, 2, 0);
+
 	vector<unsigned int> traces = {
 		0xa111110f, 0xb111110f, 0xc111111f, 0xd111111f, 0xe111110f
 	};
@@ -38,22 +40,24 @@ int main(){
     while (getline(file, line)) {
         // Check if the line starts with 'r' or 'w'
         if (line[0] == 'r' || line[0] == 'w') {
-            char operation = line[0];
+            char type = line[0];
             string hexValue = line.substr(1); // Extract the substring after 'r' or 'w'
 
             // Convert the hexadecimal string to an integer (optional)
-            unsigned int address;
+            unsigned int addr;
             stringstream ss;
             ss << hex << hexValue;
-            ss >> address;
+            ss >> addr;
 
-            // Print the operation and the hexadecimal value
-            cout << "Operation: " << operation << ", Hex Value: " << hexValue << ", Address: " << address << endl;
+			if(type == 'r'){
+				L1->read_request(addr);
+			}else if(type == 'w'){
+				L1->write_request(addr);
+			}else{
+				cerr<<"Invalid Request Type"<<endl;
+			}
         }
     }
-
-    // Close the file
-
 
 	// CACHEMEMORY *L1 = new CACHEMEMORY(512, 16, 2, 0);
 
@@ -61,9 +65,10 @@ int main(){
 	// 	L1->read_request(addr);
 	// }
 
-	// L1->show();
+	L1->show();
 	cout<<"Run Cache Simulator"<<endl<<"Done"<<endl;
 
+	// Close the file
 	file.close();
 	return 0;
 }
