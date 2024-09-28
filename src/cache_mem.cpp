@@ -99,11 +99,11 @@ void CACHEMEMORY::append(CACHEMEMORY* memory){
 
 void CACHEMEMORY::show(){
    
-    for(int i = 0; i < 5; i++){
+    for(int i = 0; i < this->cache.size(); i++){
         cout<<"set "<<i<<" ";
         for(CACHEBLOCK block : this->cache[i]){
             cout<<" Tag is: "<<hex<<block.tag<<" ";
-            cout<<" Counter is: "<<block.counter;
+            cout<<" Counter is: "<<dec<<block.counter;
             cout<<" Valid: "<<block.is_valid;
             cout<<" Dirty: "<<block.is_dirty<<" ";
         }

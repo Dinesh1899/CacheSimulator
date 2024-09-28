@@ -22,8 +22,8 @@ int main(){
 
 	//cout<<extractBits(6, 0, 0)<<endl; // 6 -> 110 
 
-	CACHEMEMORY *L1 = new CACHEMEMORY(512, 16, 2, 0);
-	CACHEMEMORY *L2 = new CACHEMEMORY(8192, 256, 2, 0);
+	CACHEMEMORY *L1 = new CACHEMEMORY(256, 16, 2, 0);
+	CACHEMEMORY *L2 = new CACHEMEMORY(4096, 16, 2, 0);
 	
 	// Append L1 to L2
 	L1->append(L2);
