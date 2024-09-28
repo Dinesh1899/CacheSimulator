@@ -1,29 +1,33 @@
-# Define the compiler
+# Define the compiler and flags
 CXX = g++
+
 
 # Define the target executable
 TARGET_DIR=build
 TARGET = $(TARGET_DIR)/hello
 
-# Define the source file
-SRC = src/hello.cpp
+# Define the source files
+SRCS = src/hello.cpp src/request_handlers.cpp src/cache_mem.cpp
 
 # Define the object file
 OBJ_DIR = objects
-OBJ = $(OBJ_DIR)/hello.o
+OBJS = objects/hello.o objects/request_handlers.o objects/cache_mem.o
 
 # Default target
 all: $(TARGET)
-	./$(TARGET)
 
-# Rule to build the target executable
-$(TARGET): $(OBJ)
-	$(CXX) -o $(TARGET) $(OBJ)
+# Rule to link object files to create the executable
+$(TARGET): $(OBJS)
+	$(CXX) -o $(TARGET) objects/hello.o
 
-# Rule to build the object file
-$(OBJ): $(SRC)
-	$(CXX) -c $(SRC) -o $(OBJ)
+# Rule to compile source files into object files
+$(OBJ_DIR)/%.o: src/%.cpp
+	$(CXX) -c $< -o $@
 
-# Clean up generated files
+# Clean up the build files
 clean:
-	rm -rf $(TARGET_DIR)/* $(OBJ_DIR)/*
+	rm -f $(OBJ_DIR)/*.o $(TARGET)
+
+# Run the program
+run: $(TARGET)
+	./$(TARGET) > logs/output.log

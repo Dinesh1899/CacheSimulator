@@ -1,4 +1,7 @@
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 #include "request_handlers.cpp"
 #include <vector>
 using namespace std;
@@ -24,14 +27,44 @@ int main(){
 	};
 
 
-	CACHEMEMORY *L1 = new CACHEMEMORY(512, 16, 2, 0);
+    // Open the trace file
+    ifstream file("samples/traces/tracefile.txt");
+    if (!file.is_open()) {
+        cerr << "Unable to open file!" << endl;
+        return 1;
+    }
 
-	for(unsigned int addr : traces){
-		L1->read_request(addr);
-	}
+    string line;
+    while (getline(file, line)) {
+        // Check if the line starts with 'r' or 'w'
+        if (line[0] == 'r' || line[0] == 'w') {
+            char operation = line[0];
+            string hexValue = line.substr(1); // Extract the substring after 'r' or 'w'
 
-	L1->show();
+            // Convert the hexadecimal string to an integer (optional)
+            unsigned int address;
+            stringstream ss;
+            ss << hex << hexValue;
+            ss >> address;
+
+            // Print the operation and the hexadecimal value
+            cout << "Operation: " << operation << ", Hex Value: " << hexValue << ", Address: " << address << endl;
+        }
+    }
+
+    // Close the file
+
+
+	// CACHEMEMORY *L1 = new CACHEMEMORY(512, 16, 2, 0);
+
+	// for(unsigned int addr : traces){
+	// 	L1->read_request(addr);
+	// }
+
+	// L1->show();
 	cout<<"Run Cache Simulator"<<endl<<"Done"<<endl;
+
+	file.close();
 	return 0;
 }
 
