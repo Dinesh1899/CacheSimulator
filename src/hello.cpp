@@ -23,9 +23,13 @@ int main(){
 	//cout<<extractBits(6, 0, 0)<<endl; // 6 -> 110 
 
 	CACHEMEMORY *L1 = new CACHEMEMORY(512, 16, 2, 0);
+	CACHEMEMORY *L2 = new CACHEMEMORY(8192, 256, 2, 0);
+	
+	// Append L1 to L2
+	L1->append(L2);
 
 	vector<unsigned int> traces = {
-		0xa111110f, 0xb111110f, 0xc111111f, 0xd111111f, 0xe111110f
+		0xa111100f, 0xb111110f, 0xc111121f, 0xd111131f, 0xe111140f
 	};
 
 
@@ -64,8 +68,10 @@ int main(){
 	// for(unsigned int addr : traces){
 	// 	L1->read_request(addr);
 	// }
-
+	cout<<"=====================L1 Contents===================="<<endl;
 	L1->show();
+	cout<<"=====================L2 Contents===================="<<endl;
+	L2->show();
 	cout<<"Run Cache Simulator"<<endl<<"Done"<<endl;
 
 	// Close the file

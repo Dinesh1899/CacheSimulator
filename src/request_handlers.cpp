@@ -16,7 +16,7 @@ CACHEBLOCK CACHEMEMORY::get_read_block(unsigned int addr, bool is_write_request)
     CACHEBLOCK cb;
     int tag_lsb = this->block_offset_bits_length + this->index_bits_length;
     cb.tag = this->get_masked_data(addr, this->tag_mask, tag_lsb);
-    cb.block_offset = this->get_masked_data(addr, this->block_offset_mask, 0);
+    cb.block_offset = addr;
     cb.counter = 0;
     cb.is_dirty = is_write_request;
     cb.is_valid = true;
@@ -135,7 +135,7 @@ bool CACHEMEMORY::read_request(unsigned int addr){
             // line is full --> evict block
             CACHEBLOCK evicted_block = get_lru_block(idx);
             if(this->next_mem != nullptr && evicted_block.is_dirty){ 
-                unsigned int write_back_addr = evicted_block.tag + idx + evicted_block.block_offset;
+                unsigned int write_back_addr = evicted_block.block_offset;
                 this->next_mem->write_request(write_back_addr);
             }
         }
@@ -175,7 +175,7 @@ bool CACHEMEMORY::write_request(unsigned int addr){
             // line is full --> evict block
             CACHEBLOCK evicted_block = get_lru_block(idx);
             if(this->next_mem != nullptr && evicted_block.is_dirty){ 
-                unsigned int write_back_addr = evicted_block.tag + idx + evicted_block.block_offset;
+                unsigned int write_back_addr = evicted_block.block_offset;
                 this->next_mem->write_request(write_back_addr);
             }
         }

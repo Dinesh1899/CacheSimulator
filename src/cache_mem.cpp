@@ -48,6 +48,8 @@ public:
     ~CACHEMEMORY();
     CACHEMEMORY(int size, int blocksize, int assoc, int vc_blocks);
     
+    void append(CACHEMEMORY* memory);
+
     void set_tag_mask(int tag_length);
     void set_index_mask(int index_length, int block_offset_length);
     void set_block_offset_mask(int block_offset_length);
@@ -74,6 +76,7 @@ CACHEMEMORY::CACHEMEMORY(){}
 CACHEMEMORY::~CACHEMEMORY(){}
 
 CACHEMEMORY::CACHEMEMORY(int size, int blocksize, int assoc, int vc_blocks){
+    this->next_mem = nullptr;
     int num_sets = size/(blocksize * assoc);
     this->cache.resize(num_sets);
 
@@ -90,12 +93,19 @@ CACHEMEMORY::CACHEMEMORY(int size, int blocksize, int assoc, int vc_blocks){
     } 
 }
 
+void CACHEMEMORY::append(CACHEMEMORY* memory){
+    this->next_mem = memory;
+}
+
 void CACHEMEMORY::show(){
    
-    for(int i = 0; i < this->cache.size(); i++){
+    for(int i = 0; i < 5; i++){
         cout<<"set "<<i<<" ";
         for(CACHEBLOCK block : this->cache[i]){
-            cout<<hex<<block.tag<<" "<<block.counter<<" "<<block.is_valid<<" "<<block.is_dirty<<" ";
+            cout<<" Tag is: "<<hex<<block.tag<<" ";
+            cout<<" Counter is: "<<block.counter;
+            cout<<" Valid: "<<block.is_valid;
+            cout<<" Dirty: "<<block.is_dirty<<" ";
         }
         cout<<endl;
     }
