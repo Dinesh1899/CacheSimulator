@@ -8,44 +8,78 @@
 
 using namespace std;
 
-int CACHEMEMORY::get_masked_data(int addr, int mask, int start){
+unsigned int CACHEMEMORY::get_masked_data(unsigned int addr, unsigned int mask, int start){
     return (addr & mask) >> start;
 }
 
-CACHEBLOCK CACHEMEMORY::get_read_block(int addr){
+CACHEBLOCK CACHEMEMORY::get_read_block(unsigned int addr, bool is_write_request){
     CACHEBLOCK cb;
     int tag_lsb = this->block_offset_bits_length + this->index_bits_length;
     cb.tag = this->get_masked_data(addr, this->tag_mask, tag_lsb);
     cb.block_offset = this->get_masked_data(addr, this->block_offset_mask, 0);
     cb.counter = 0;
-    cb.is_dirty = false;
+    cb.is_dirty = is_write_request;
     cb.is_valid = true;
 
     return cb;
 }
 
 
-void insert_block_and_update_lru(vector<CACHEBLOCK>& line, int idx, CACHEBLOCK& new_block){
-    CACHEBLOCK existing_block = line.at(idx);
-    int lru = existing_block.counter;
+void CACHEMEMORY::insert_block_and_update_lru(int row, int hit, CACHEBLOCK& new_block){
 
-    line.erase(line.begin()+idx);
+    int hit_block_counter = this->cache[row][hit].counter;
 
-    for(CACHEBLOCK block : line){
-        if(block.counter < lru){
-            block.counter++;
+    for(int j=0;j<this->cache[row].size();j++){
+        if(this->cache[row][j].is_valid){
+            if(j == hit){
+                this->cache[row][j].block_offset = new_block.block_offset;
+                this->cache[row][j].tag = new_block.tag;
+                this->cache[row][j].is_valid = true;
+                this->cache[row][j].is_dirty = new_block.is_dirty;
+                this->cache[row][j].counter = 0;
+            }else{
+                //Update the block with the new block details
+                int val = this->cache[row][j].counter;
+                if(val < hit_block_counter)
+                    this->cache[row][j].counter++;
+            }
         }
     }
 
-    // insert new block
-    line.push_back(new_block);
 }
 
-int search_block_by_tag(vector<CACHEBLOCK>& line, int tag){
+void CACHEMEMORY::insert_block_replace_invalid_block_and_update_lru(int row, CACHEBLOCK& new_block){
+
+    int idx = 0;
+
+    for(CACHEBLOCK block : this->cache[row]){
+        if(!block.is_valid){
+            break;
+        }
+        idx++;
+    }
+
+    for(int j=0;j<this->cache[row].size();j++){
+        if(this->cache[row][j].is_valid && j != idx){
+            //Update the block with the new block details
+            this->cache[row][j].counter++;
+        }
+    }
+
+    //Update the block with the new block details
+    this->cache[row][idx].block_offset = new_block.block_offset;
+    this->cache[row][idx].tag = new_block.tag;
+    this->cache[row][idx].is_valid = true;
+    this->cache[row][idx].is_dirty = new_block.is_dirty;
+    this->cache[row][idx].counter = 0;
+
+}
+
+int CACHEMEMORY::search_block_by_tag(int row, int tag){
     int hit_block_idx = -1;
     int idx = 0;
 
-    for(CACHEBLOCK block : line){
+    for(CACHEBLOCK block : this->cache.at(row)){
         if(block.is_valid && block.tag == tag){
             return idx;
         }
@@ -54,38 +88,41 @@ int search_block_by_tag(vector<CACHEBLOCK>& line, int tag){
     return -1;
 }
 
-bool is_cache_full(vector<CACHEBLOCK>& line){
+bool CACHEMEMORY::is_cache_full(int row){
     int idx = 0;
 
-    for(CACHEBLOCK block : line){
+    for(CACHEBLOCK block : this->cache[row]){
         if(block.is_valid){
-            return idx;
+            idx++;
         }
-        idx++;
     }
-    return idx == line.size();
+    return idx == this->cache[row].size();
 }
 
-bool get_lru_block(vector<CACHEBLOCK>& line){
-    int lru_idx = -1;
+CACHEBLOCK CACHEMEMORY::get_lru_block(int row){
     int idx = 0;
-    for(CACHEBLOCK block : line){
-        if(block.is_valid && block.counter > lru_idx){
-            lru_idx = block.counter;
+    int assoc = this->cache[row].size() - 1;
+    CACHEBLOCK evict;
+    for(CACHEBLOCK block : this->cache[row]){
+        if(block.is_valid && block.counter == assoc){
+            evict = block;
+            break;
         }
         idx++;
     }
-    return lru_idx;
+
+    this->cache[row][idx].is_valid = false;
+
+    return evict;
 }
 
-bool CACHEMEMORY::read_request(int addr){
+bool CACHEMEMORY::read_request(unsigned int addr){
     // Get the cache line from addr and index mask
-    int idx = get_masked_data(addr, this->index_mask, this->block_offset_bits_length);
-    vector<CACHEBLOCK> line = this->cache[idx];
+    int idx = get_masked_data(addr, this->index_mask,this->block_offset_bits_length);
 
     // Search block from the cacheline
-    CACHEBLOCK requested_block = this->get_read_block(addr);
-    int block_idx = search_block_by_tag(line, requested_block.tag);
+    CACHEBLOCK requested_block = this->get_read_block(addr, false);
+    int block_idx = search_block_by_tag(idx, requested_block.tag);
 
     if(block_idx == -1){
         // Read Miss
@@ -94,8 +131,13 @@ bool CACHEMEMORY::read_request(int addr){
         // update lru
         // return false
 
-        if(is_cache_full(line)){
+        if(is_cache_full(idx)){
             // line is full --> evict block
+            CACHEBLOCK evicted_block = get_lru_block(idx);
+            if(this->next_mem != nullptr && evicted_block.is_dirty){ 
+                unsigned int write_back_addr = evicted_block.tag + idx + evicted_block.block_offset;
+                this->next_mem->write_request(write_back_addr);
+            }
         }
         // fetch from next level
         if(this->next_mem != nullptr){
@@ -104,13 +146,51 @@ bool CACHEMEMORY::read_request(int addr){
 
         // insert new block
         // update lru
-        insert_block_and_update_lru(line, line.size(), requested_block)
-        // return false 
+        insert_block_replace_invalid_block_and_update_lru(idx, requested_block);
+        return false; 
     }else{
         // Read Hit --> return true and update lru counter
-        insert_block_and_update_lru(line, block_idx, requested_block);
+        insert_block_and_update_lru(idx, block_idx, requested_block);
+        return true;
     }
     
+}
 
+bool CACHEMEMORY::write_request(unsigned int addr){
+        // Get the cache line from addr and index mask
+    int idx = get_masked_data(addr, this->index_mask,this->block_offset_bits_length);
 
+    // Search block from the cacheline
+    CACHEBLOCK requested_block = this->get_read_block(addr, true);
+    int block_idx = search_block_by_tag(idx, requested_block.tag);
+
+    if(block_idx == -1){
+        // Read Miss
+        // fetch from next level 
+        // insert new block
+        // update lru
+        // return false
+
+        if(is_cache_full(idx)){
+            // line is full --> evict block
+            CACHEBLOCK evicted_block = get_lru_block(idx);
+            if(this->next_mem != nullptr && evicted_block.is_dirty){ 
+                unsigned int write_back_addr = evicted_block.tag + idx + evicted_block.block_offset;
+                this->next_mem->write_request(write_back_addr);
+            }
+        }
+        // fetch from next level
+        if(this->next_mem != nullptr){
+            this->next_mem->read_request(addr);
+        }
+
+        // insert new block
+        // update lru
+        insert_block_replace_invalid_block_and_update_lru(idx, requested_block);
+        return false; 
+    }else{
+        // Read Hit --> return true and update lru counter
+        insert_block_and_update_lru(idx, block_idx, requested_block);
+        return true;
+    }
 }

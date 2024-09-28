@@ -1,5 +1,5 @@
 #include <iostream>
-#include "cache_mem.cpp"
+#include "request_handlers.cpp"
 #include <vector>
 using namespace std;
 
@@ -9,6 +9,9 @@ int extractBits(int number, int p, int q) {
 }
 
 
+// 1110 -> e
+// 1111 -> f
+
 int main(){
 	//long num = stoi("a",0,16);
 	//cout<<"Num is: "<<num<<endl;
@@ -16,13 +19,19 @@ int main(){
 
 	//cout<<extractBits(6, 0, 0)<<endl; // 6 -> 110 
 
-	CACHEMEMORY *L1 = new CACHEMEMORY(64, 16, 2, 0);
+	vector<unsigned int> traces = {
+		0xa111110f, 0xb111110f, 0xc111111f, 0xd111111f, 0xe111110f
+	};
+
+
+	CACHEMEMORY *L1 = new CACHEMEMORY(512, 16, 2, 0);
+
+	for(unsigned int addr : traces){
+		L1->read_request(addr);
+	}
 
 	L1->show();
-	// vector<int> vec;
-	// vec.push_back(52);
-	// vec.push_back(72);
-	// cout<<"First: "<<vec.at(1)<<endl;
 	cout<<"Run Cache Simulator"<<endl<<"Done"<<endl;
 	return 0;
 }
+

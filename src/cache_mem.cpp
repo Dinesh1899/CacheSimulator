@@ -37,9 +37,9 @@ private:
     unsigned int tag_mask;
     unsigned int block_offset_mask;
 
-    unsigned int tag_bits_length;
-    unsigned int index_bits_length;
-    unsigned int block_offset_bits_length;
+    int tag_bits_length;
+    int index_bits_length;
+    int block_offset_bits_length;
 
 
 public:
@@ -52,12 +52,21 @@ public:
     void set_index_mask(int index_length, int block_offset_length);
     void set_block_offset_mask(int block_offset_length);
     void set_masks(int blocksize, int num_sets);
-    int get_mask(int right, int left);
-    int get_masked_data(int addr, int mask, int right);
-    CACHEBLOCK get_read_block(int addr);
+    unsigned int get_mask(int right, int left);
+    unsigned int get_masked_data(unsigned int addr, unsigned int mask, int right);
+    CACHEBLOCK get_read_block(unsigned int addr, bool is_write_request);
+    void insert_block_and_update_lru(int row, int col, CACHEBLOCK &new_block);
+    void insert_block_replace_invalid_block_and_update_lru(int row, CACHEBLOCK &new_block);
+    int search_block_by_tag(int row, int tag);
     void show();
 
-    bool read_request(int addr);
+    bool is_cache_full(int row);
+
+    CACHEBLOCK get_lru_block(int row);
+
+    bool read_request(unsigned int addr);
+
+    bool write_request(unsigned int addr);
 };
 
 CACHEMEMORY::CACHEMEMORY(){}
@@ -66,21 +75,19 @@ CACHEMEMORY::~CACHEMEMORY(){}
 
 CACHEMEMORY::CACHEMEMORY(int size, int blocksize, int assoc, int vc_blocks){
     int num_sets = size/(blocksize * assoc);
-    //this->cache.resize(num_sets);
+    this->cache.resize(num_sets);
+
+    for(int i=0;i<this->cache.size();i++){
+        this->cache[i].resize(assoc);
+    }
+
     set_masks(blocksize, num_sets);
     
-    for(int i=0;i<num_sets;i++){
-        vector<CACHEBLOCK> cache_set;
-        for(int j=0;j<assoc;j++){
-            CACHEBLOCK block;
-            block.tag = j;
-            block.is_valid = false;
-            
-            cache_set.push_back(block);
+    for(int i=0;i<this->cache.size();i++){
+        for(int j=0;j<this->cache[i].size();j++){
+            this->cache[i][j].is_valid = false;
         }
-        this->cache.push_back(cache_set);
     } 
-
 }
 
 void CACHEMEMORY::show(){
@@ -88,7 +95,7 @@ void CACHEMEMORY::show(){
     for(int i = 0; i < this->cache.size(); i++){
         cout<<"set "<<i<<" ";
         for(CACHEBLOCK block : this->cache[i]){
-            cout<<block.tag<<" "<<block.is_valid<<" "<<block.is_dirty<<" ";
+            cout<<hex<<block.tag<<" "<<block.counter<<" "<<block.is_valid<<" "<<block.is_dirty<<" ";
         }
         cout<<endl;
     }
@@ -123,7 +130,7 @@ void CACHEMEMORY::set_tag_mask(int tag_length){
     this->tag_mask = get_mask(ADDR_LENGTH-tag_length,ADDR_LENGTH);
 }
 
-int CACHEMEMORY::get_mask(int right, int left){
+unsigned int CACHEMEMORY::get_mask(int right, int left){
     return ((1 << (left - right + 1)) - 1) << right;
 }
 
@@ -131,12 +138,12 @@ int test_mask(int right, int left){
     return ((1 << (left - right + 1)) - 1) << right;
 }
 
-int main(){
+// int main(){
 
-    int num = 0xeff5;
-    int mask = test_mask(1,2);
-    int res = (num & mask) >> 1;
-    cout<<"Mask is: "<<mask<<endl;
-    cout<<"Result is: "<<res<<endl;
-    return 0;
-}
+//     int num = 0xeff5;
+//     int mask = test_mask(1,2);
+//     int res = (num & mask) >> 1;
+//     cout<<"Mask is: "<<mask<<endl;
+//     cout<<"Result is: "<<res<<endl;
+//     return 0;
+// }
