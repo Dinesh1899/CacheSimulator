@@ -13,6 +13,15 @@ SRCS = src/hello.cpp src/request_handlers.cpp src/cache_mem.cpp
 OBJ_DIR = objects
 OBJS = objects/hello.o objects/request_handlers.o objects/cache_mem.o
 
+# COMMAND LINE ARGS - CACHE PARAMS
+L1_SIZE = 1024
+L1_ASSOC = 2
+L1_BLOCKSIZE = 16 
+VC_NUM_BLOCKS = 0
+L2_SIZE = 0
+L2_ASSOC = 0
+TRACEFILE = gcc_trace.txt
+
 # Default target
 all: $(TARGET)
 
@@ -30,4 +39,4 @@ clean:
 
 # Run the program
 run: $(TARGET)
-	./$(TARGET) > logs/output.log
+	./$(TARGET) $(L1_SIZE) $(L1_ASSOC) $(L1_BLOCKSIZE) $(VC_NUM_BLOCKS) $(L2_SIZE) $(L2_ASSOC) $(TRACEFILE)   > logs/output.log

@@ -4,6 +4,7 @@
 #include <vector>
 #include <math.h>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -16,13 +17,13 @@ struct CACHEBLOCK
     bool is_dirty;
     int counter; // LRU Counter
 
-    bool operator==(const CACHEBLOCK& cb) const
-    {
-        return (this->tag == cb.tag);
-    }
-
 };
 
+bool counter_comparator(const CACHEBLOCK& a, const CACHEBLOCK& b)
+{
+    // CACHE BLOCK with least LRU comes first
+    return a.counter < b.counter;
+}
 
 class CACHEMEMORY
 {
@@ -49,7 +50,7 @@ public:
     CACHEMEMORY(int size, int blocksize, int assoc, int vc_blocks);
     
     void append(CACHEMEMORY* memory);
-
+    void sort_each_set();
     void set_tag_mask(int tag_length);
     void set_index_mask(int index_length, int block_offset_length);
     void set_block_offset_mask(int block_offset_length);
@@ -97,15 +98,35 @@ void CACHEMEMORY::append(CACHEMEMORY* memory){
     this->next_mem = memory;
 }
 
+
+void CACHEMEMORY::sort_each_set() {
+    // int s = this->cache.size();
+    // for(int i = 0; i < s; i++){
+    //     int n = this->cache[i].size();
+    //     for (int j = 0; j < n - 1; ++j) {
+    //         for (int k = 0; k < n - j - 1; ++k) {
+    //             if (this->cache[i][k].counter > this->cache[i][k + 1].counter) {
+    //                 swap(this->cache[i][k], this->cache[i][k + 1]);
+    //             }
+    //         }
+    //     }
+    // }
+
+    for (auto &vec : this->cache) {
+        std::sort(vec.begin(), vec.end(), counter_comparator);
+    }
+
+}
+
 void CACHEMEMORY::show(){
    
     for(int i = 0; i < this->cache.size(); i++){
-        cout<<"set "<<i<<" ";
+        cout<<"\tset "<<i<<":\t";
         for(CACHEBLOCK block : this->cache[i]){
-            cout<<" Tag is: "<<hex<<block.tag<<" ";
-            cout<<" Counter is: "<<dec<<block.counter;
-            cout<<" Valid: "<<block.is_valid;
-            cout<<" Dirty: "<<block.is_dirty<<" ";
+            cout<<hex<<block.tag<<" "<<dec;
+            //cout<<"Counter: "<<block.counter<<" ";
+            string dirty_char = block.is_dirty ? "D" : " ";
+            cout<<dirty_char<<"\t";
         }
         cout<<endl;
     }
