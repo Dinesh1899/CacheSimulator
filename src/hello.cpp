@@ -2,7 +2,8 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include "request_handlers.cpp"
+//#include "request_handlers.cpp"
+#include "victim_request_handlers.cpp"
 #include <vector>
 using namespace std;
 
@@ -49,59 +50,117 @@ int main(int argc, char* argv[]){
     cout << "  trace_file:\t\t" << tracefile << endl;
 	cout<<endl;
 
-	CACHEMEMORY *L1 = new CACHEMEMORY(L1_SIZE, L1_BLOCKSIZE, L1_ASSOC, VC_NUM_BLOCKS);
-	CACHEMEMORY *L2 = nullptr;
-
-	if(L2_SIZE > 0){
-		L2 = new CACHEMEMORY(L2_SIZE, L1_BLOCKSIZE, L2_ASSOC, 0);
-		// Append L1 to L2
-		L1->append(L2);
-	}
 
 
+	if(VC_NUM_BLOCKS == 0){
+		CACHEMEMORY *L1 = new CACHEMEMORY(L1_SIZE, L1_BLOCKSIZE, L1_ASSOC);
+		CACHEMEMORY *L2 = nullptr;
 
-    // Open the trace file
-	string trace_file_dir = "samples/traces/";
-	string trace_file_path = trace_file_dir + tracefile;
-    ifstream file(trace_file_path);
-    if (!file.is_open()) {
-        cerr << "Unable to open file!" << endl;
-        return 1;
-    }
+		if(L2_SIZE > 0){
+			L2 = new CACHEMEMORY(L2_SIZE, L1_BLOCKSIZE, L2_ASSOC);
+			// Append L1 to L2
+			L1->append(L2);
+		}
 
-    string line;
-    while (getline(file, line)) {
-        // Check if the line starts with 'r' or 'w'
-        if (line[0] == 'r' || line[0] == 'w') {
-            char type = line[0];
-            string hexValue = line.substr(1); // Extract the substring after 'r' or 'w'
+		// Open the trace file
+		string trace_file_dir = "samples/traces/";
+		string trace_file_path = trace_file_dir + tracefile;
+		ifstream file(trace_file_path);
+		if (!file.is_open()) {
+			cerr << "Unable to open file!" << endl;
+			return 1;
+		}
 
-            // Convert the hexadecimal string to an integer (optional)
-            unsigned int addr;
-            stringstream ss;
-            ss << hex << hexValue;
-            ss >> addr;
+		string line;
+		while (getline(file, line)) {
+			// Check if the line starts with 'r' or 'w'
+			if (line[0] == 'r' || line[0] == 'w') {
+				char type = line[0];
+				string hexValue = line.substr(1); // Extract the substring after 'r' or 'w'
 
-			if(type == 'r'){
-				L1->read_request(addr);
-			}else if(type == 'w'){
-				L1->write_request(addr);
-			}else{
-				cerr<<"Invalid Request Type"<<endl;
+				// Convert the hexadecimal string to an integer (optional)
+				unsigned int addr;
+				stringstream ss;
+				ss << hex << hexValue;
+				ss >> addr;
+
+				if(type == 'r'){
+					L1->read_request(addr);
+				}else if(type == 'w'){
+					L1->write_request(addr);
+				}else{
+					cerr<<"Invalid Request Type"<<endl;
+				}
 			}
-        }
-    }
+		}
 
-	// Close the file
-	file.close();
-	L1->sort_each_set();
-	cout<<"===== L1 contents ====="<<endl;
-	L1->show();
-	if(L2_SIZE > 0){
-		L2->sort_each_set();
-		cout<<"===== L2 contents ====="<<endl;
-		L2->show();
+		// Close the file
+		file.close();
+		L1->sort_each_set();
+		cout<<"===== L1 contents ====="<<endl;
+		L1->show();
+		if(L2_SIZE > 0){
+			L2->sort_each_set();
+			cout<<"===== L2 contents ====="<<endl;
+			L2->show();
+		}
+	}else{
+		L1VC *L1 = new L1VC(L1_SIZE, L1_BLOCKSIZE, L1_ASSOC, VC_NUM_BLOCKS);
+		CACHEMEMORY *L2 = nullptr;
+
+		if(L2_SIZE > 0){
+			L2 = new CACHEMEMORY(L2_SIZE, L1_BLOCKSIZE, L2_ASSOC);
+			// Append L1 to L2
+			L1->append(L2);
+		}
+
+		// Open the trace file
+		string trace_file_dir = "samples/traces/";
+		string trace_file_path = trace_file_dir + tracefile;
+		ifstream file(trace_file_path);
+		if (!file.is_open()) {
+			cerr << "Unable to open file!" << endl;
+			return 1;
+		}
+
+		string line;
+		while (getline(file, line)) {
+			// Check if the line starts with 'r' or 'w'
+			if (line[0] == 'r' || line[0] == 'w') {
+				char type = line[0];
+				string hexValue = line.substr(1); // Extract the substring after 'r' or 'w'
+
+				// Convert the hexadecimal string to an integer (optional)
+				unsigned int addr;
+				stringstream ss;
+				ss << hex << hexValue;
+				ss >> addr;
+
+				if(type == 'r'){
+					L1->read_request(addr);
+				}else if(type == 'w'){
+					L1->write_request(addr);
+				}else{
+					cerr<<"Invalid Request Type"<<endl;
+				}
+			}
+		}
+
+		// Close the file
+		file.close();
+		L1->sort_each_set();
+		cout<<"===== L1 contents ====="<<endl;
+		L1->show();
+		if(L2_SIZE > 0){
+			L2->sort_each_set();
+			cout<<"===== L2 contents ====="<<endl;
+			L2->show();
+		}
 	}
+
+
+
+
 
 	return 0;
 }
