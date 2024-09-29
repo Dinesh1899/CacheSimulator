@@ -132,6 +132,8 @@ void CACHEMEMORY::show(){
         cout<<endl;
     }
 
+    cout<<endl;
+
 }
 
 void CACHEMEMORY::set_masks(int blocksize, int num_sets){

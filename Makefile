@@ -15,11 +15,11 @@ OBJS = objects/hello.o objects/request_handlers.o objects/cache_mem.o
 
 # COMMAND LINE ARGS - CACHE PARAMS
 L1_SIZE = 1024
-L1_ASSOC = 2
+L1_ASSOC = 1
 L1_BLOCKSIZE = 16 
 VC_NUM_BLOCKS = 0
-L2_SIZE = 0
-L2_ASSOC = 0
+L2_SIZE = 8192
+L2_ASSOC = 4
 TRACEFILE = gcc_trace.txt
 
 # Default target
