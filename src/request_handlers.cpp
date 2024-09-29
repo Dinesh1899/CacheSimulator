@@ -25,7 +25,7 @@ CACHEBLOCK CACHEMEMORY::get_read_block(unsigned int addr, bool is_write_request)
 }
 
 
-void CACHEMEMORY::insert_block_and_update_lru(int row, int hit, CACHEBLOCK& new_block){
+void CACHEMEMORY::insert_block_and_update_lru(int row, int hit, CACHEBLOCK& new_block, bool update_dirty_bit){
 
     int hit_block_counter = this->cache[row][hit].counter;
 
@@ -35,7 +35,8 @@ void CACHEMEMORY::insert_block_and_update_lru(int row, int hit, CACHEBLOCK& new_
                 this->cache[row][j].block_offset = new_block.block_offset;
                 this->cache[row][j].tag = new_block.tag;
                 this->cache[row][j].is_valid = true;
-                this->cache[row][j].is_dirty = new_block.is_dirty;
+                if(update_dirty_bit)
+                    this->cache[row][j].is_dirty = new_block.is_dirty;
                 this->cache[row][j].counter = 0;
             }else{
                 //Update the block with the new block details
@@ -48,7 +49,7 @@ void CACHEMEMORY::insert_block_and_update_lru(int row, int hit, CACHEBLOCK& new_
 
 }
 
-void CACHEMEMORY::insert_block_replace_invalid_block_and_update_lru(int row, CACHEBLOCK& new_block){
+void CACHEMEMORY::insert_block_replace_invalid_block_and_update_lru(int row, CACHEBLOCK& new_block, bool update_dirty_bit){
 
     int idx = 0;
 
@@ -70,7 +71,8 @@ void CACHEMEMORY::insert_block_replace_invalid_block_and_update_lru(int row, CAC
     this->cache[row][idx].block_offset = new_block.block_offset;
     this->cache[row][idx].tag = new_block.tag;
     this->cache[row][idx].is_valid = true;
-    this->cache[row][idx].is_dirty = new_block.is_dirty;
+    if(update_dirty_bit)
+        this->cache[row][idx].is_dirty = new_block.is_dirty;
     this->cache[row][idx].counter = 0;
 
 }
@@ -120,6 +122,10 @@ bool CACHEMEMORY::read_request(unsigned int addr){
     // Get the cache line from addr and index mask
     int idx = get_masked_data(addr, this->index_mask,this->block_offset_bits_length);
 
+    //Debug
+    // if(idx == 1)
+    //     cout<<hex<<"Addr with index 1: "<<"r "<<addr<<endl;
+
     // Search block from the cacheline
     CACHEBLOCK requested_block = this->get_read_block(addr, false);
     int block_idx = search_block_by_tag(idx, requested_block.tag);
@@ -146,11 +152,11 @@ bool CACHEMEMORY::read_request(unsigned int addr){
 
         // insert new block
         // update lru
-        insert_block_replace_invalid_block_and_update_lru(idx, requested_block);
+        insert_block_replace_invalid_block_and_update_lru(idx, requested_block, true);
         return false; 
     }else{
         // Read Hit --> return true and update lru counter
-        insert_block_and_update_lru(idx, block_idx, requested_block);
+        insert_block_and_update_lru(idx, block_idx, requested_block, false);
         return true;
     }
     
@@ -159,6 +165,10 @@ bool CACHEMEMORY::read_request(unsigned int addr){
 bool CACHEMEMORY::write_request(unsigned int addr){
         // Get the cache line from addr and index mask
     int idx = get_masked_data(addr, this->index_mask,this->block_offset_bits_length);
+
+    //Debug
+    // if(idx == 1)
+    //     cout<<"Addr with index 1: "<<"w "<<hex<<addr<<endl;
 
     // Search block from the cacheline
     CACHEBLOCK requested_block = this->get_read_block(addr, true);
@@ -186,11 +196,11 @@ bool CACHEMEMORY::write_request(unsigned int addr){
 
         // insert new block
         // update lru
-        insert_block_replace_invalid_block_and_update_lru(idx, requested_block);
+        insert_block_replace_invalid_block_and_update_lru(idx, requested_block, true);
         return false; 
     }else{
         // Read Hit --> return true and update lru counter
-        insert_block_and_update_lru(idx, block_idx, requested_block);
+        insert_block_and_update_lru(idx, block_idx, requested_block, true);
         return true;
     }
 }

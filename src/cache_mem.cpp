@@ -58,8 +58,8 @@ public:
     unsigned int get_mask(int right, int left);
     unsigned int get_masked_data(unsigned int addr, unsigned int mask, int right);
     CACHEBLOCK get_read_block(unsigned int addr, bool is_write_request);
-    void insert_block_and_update_lru(int row, int col, CACHEBLOCK &new_block);
-    void insert_block_replace_invalid_block_and_update_lru(int row, CACHEBLOCK &new_block);
+    void insert_block_and_update_lru(int row, int col, CACHEBLOCK &new_block, bool is_dirty);
+    void insert_block_replace_invalid_block_and_update_lru(int row, CACHEBLOCK &new_block, bool is_dirty);
     int search_block_by_tag(int row, int tag);
     void show();
 
@@ -121,12 +121,13 @@ void CACHEMEMORY::sort_each_set() {
 void CACHEMEMORY::show(){
    
     for(int i = 0; i < this->cache.size(); i++){
-        cout<<"\tset "<<i<<":\t";
+        cout<<dec<<"\tset "<<i<<":\t";
         for(CACHEBLOCK block : this->cache[i]){
-            cout<<hex<<block.tag<<" "<<dec;
+            cout<<hex<<block.tag<<" ";
             //cout<<"Counter: "<<block.counter<<" ";
-            string dirty_char = block.is_dirty ? "D" : " ";
-            cout<<dirty_char<<"\t";
+            //cout<<"Dirty Bit: "<<block.is_dirty<<" ";
+            char dirty_char = block.is_dirty ? 'D' : ' ';
+            cout<<dec<<dirty_char<<"\t";
         }
         cout<<endl;
     }
