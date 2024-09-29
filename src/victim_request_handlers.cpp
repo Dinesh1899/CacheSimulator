@@ -460,8 +460,8 @@ CACHEBLOCK CACHEMEMORY::get_lru_block(int row){
 
 bool CACHEMEMORY::read_request(unsigned int addr){
     // Get the cache line from addr and index mask
-    int idx = get_masked_data(addr, this->index_mask,this->block_offset_bits_length);
-
+    this->reads++;
+    int idx = get_masked_data(addr, this->index_mask, this->block_offset_bits_length);
     //Debug
     // if(idx == 1)
     //     cout<<hex<<"Addr with index 1: "<<"r "<<addr<<endl;
@@ -476,14 +476,19 @@ bool CACHEMEMORY::read_request(unsigned int addr){
         // insert new block
         // update lru
         // return false
-
+        this->read_misses++;
         if(is_cache_full(idx)){
             // line is full --> evict block
             CACHEBLOCK evicted_block = get_lru_block(idx);
-            if(this->next_mem != nullptr && evicted_block.is_dirty){ 
-                unsigned int write_back_addr = evicted_block.block_offset;
-                this->next_mem->write_request(write_back_addr);
+
+            if(evicted_block.is_dirty){
+                this->write_backs++;
+                if(this->next_mem != nullptr){ 
+                    unsigned int write_back_addr = evicted_block.block_offset;
+                    this->next_mem->write_request(write_back_addr);
+                }
             }
+
         }
         // fetch from next level
         if(this->next_mem != nullptr){
@@ -504,6 +509,7 @@ bool CACHEMEMORY::read_request(unsigned int addr){
 
 bool CACHEMEMORY::write_request(unsigned int addr){
         // Get the cache line from addr and index mask
+    this->writes++;
     int idx = get_masked_data(addr, this->index_mask,this->block_offset_bits_length);
 
     //Debug
@@ -520,14 +526,19 @@ bool CACHEMEMORY::write_request(unsigned int addr){
         // insert new block
         // update lru
         // return false
-
+        this->write_misses++;
         if(is_cache_full(idx)){
             // line is full --> evict block
             CACHEBLOCK evicted_block = get_lru_block(idx);
-            if(this->next_mem != nullptr && evicted_block.is_dirty){ 
-                unsigned int write_back_addr = evicted_block.block_offset;
-                this->next_mem->write_request(write_back_addr);
+
+            if(evicted_block.is_dirty){
+                this->write_backs++;
+                if(this->next_mem != nullptr){ 
+                    unsigned int write_back_addr = evicted_block.block_offset;
+                    this->next_mem->write_request(write_back_addr);
+                }
             }
+
         }
         // fetch from next level
         if(this->next_mem != nullptr){

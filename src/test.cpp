@@ -1,34 +1,26 @@
 #include <iostream>
-#include <vector>
+#include "parse.h"
+
 using namespace std;
 
+int main(){
 
-struct CACHEBLOCK
-{
-    /* data */
-    unsigned int tag;
-    unsigned int block_offset;
-    bool is_valid;
-    bool is_dirty;
-    int counter; // LRU Counter
+    unsigned int size = 1024;
+	unsigned int assoc = 2;
+	unsigned int block_size = 16;
 
-};
+	float access_time = 0;
+	float energy = 0;
+	float area = 0;
 
-int main(){    
-    vector<CACHEBLOCK> v4;
-    v4.reserve(10);
+	int cacti = get_cacti_results(size, block_size, assoc, &access_time, &energy, &area);
 
-    CACHEBLOCK b;
-    b.is_dirty = true;
-    b.is_valid = true;
+	if(cacti > 0){
+		cout<<"Cacti Failed"<<endl;
+	}
 
-    v4.push_back(b);
+	cout<<"Access Time: "<<access_time<<" Energy: "<<energy<<" area "<<area<<endl;
 
-    cout<<"Printing V4"<<endl;
-    for(CACHEBLOCK& block : v4){
-        cout<<hex<<block.tag<<" "<<block.is_valid<<" "<<block.is_dirty<<" "<<" "<<block.counter<<" "<<block.block_offset<<endl;
-    }
+	return 0;
 
-    return 0;
 }
-

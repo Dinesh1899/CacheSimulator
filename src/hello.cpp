@@ -1,10 +1,12 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <string>
 #include <sstream>
 //#include "request_handlers.cpp"
 #include "victim_request_handlers.cpp"
 #include <vector>
+#include "parse.h"
 using namespace std;
 
 
@@ -26,9 +28,32 @@ int extractBits(int number, int p, int q) {
     return (number & mask) >> p;
 }
 
+void print_stats(CACHEMEMORY* L1, CACHEMEMORY* L2, unsigned int L1_BLOCKSIZE, unsigned int L1_SIZE, unsigned int L1_ASSOC, unsigned int L2_ASSOC, unsigned int L2_SIZE);
 
+int test(){
+
+    unsigned int size = 1024;
+	unsigned int assoc = 2;
+	unsigned int block_size = 16;
+
+	float access_time = 0;
+	float energy = 0;
+	float area = 0;
+
+	int cacti = get_cacti_results(size, block_size, assoc, &access_time, &energy, &area);
+
+	if(cacti > 0){
+		cout<<"Cacti Failed"<<endl;
+	}
+
+	cout<<"Access Time: "<<access_time<<" Energy: "<<energy<<" area "<<area<<endl;
+
+	return 0;
+
+}
 // 1110 -> e
 // 1111 -> f
+
 
 int main(int argc, char* argv[]){
 
@@ -104,6 +129,9 @@ int main(int argc, char* argv[]){
 			cout<<"===== L2 contents ====="<<endl;
 			L2->show();
 		}
+
+		print_stats(L1, L2, L1_BLOCKSIZE, L1_SIZE, L1_ASSOC, L2_ASSOC, L2_SIZE);
+		
 	}else{
 		L1VC *L1 = new L1VC(L1_SIZE, L1_BLOCKSIZE, L1_ASSOC, VC_NUM_BLOCKS);
 		CACHEMEMORY *L2 = nullptr;
@@ -165,3 +193,120 @@ int main(int argc, char* argv[]){
 	return 0;
 }
 
+
+void print_stats(CACHEMEMORY* L1, CACHEMEMORY* L2, unsigned int L1_BLOCKSIZE, unsigned int L1_SIZE, unsigned int L1_ASSOC, unsigned int L2_ASSOC, unsigned int L2_SIZE){
+
+	int l1_reads = L1->reads;
+	int l1_read_misses = L1->read_misses;
+	int l1_writes = L1->writes;
+	int l1_write_misses = L1->write_misses;
+	int l1_write_backs = L1->write_backs;
+	int l1_swap_requests = L1->swap_requests;
+	int l1_swaps = L1->swaps;
+	float l1_miss_rate = L1->get_miss_rate();
+
+	cout<<"===== Simulation results (raw) ====="<<endl;
+	cout<<"  a. number of L1 reads:"<<"\t"<<"\t"<<"\t"<<"\t"<<l1_reads<<endl;
+	cout<<"  b. number of L1 read misses:"<<"\t"<<"\t"<<"\t"<<"\t"<<l1_read_misses<<endl;
+	cout<<"  c. number of L1 writes:"<<"\t"<<"\t"<<"\t"<<"\t"<<l1_writes<<endl;
+	cout<<"  d. number of L1 write misses:"<<"\t"<<"\t"<<"\t"<<"\t"<<l1_write_misses<<endl;
+
+	cout<<"  e. number of swap requests:"<<"\t"<<"\t"<<"\t"<<"\t"<<l1_swap_requests<<endl;
+	cout<<"  f. swap request rate:"<<"\t"<<"\t"<<"\t"<<"\t"<<fixed<<setprecision(3)<<L1->get_swap_request_rate()<<endl;
+	cout<<"  g. number of swaps:"<<"\t"<<"\t"<<"\t"<<"\t"<<l1_swaps<<endl;
+	
+	cout<<"  h. combined L1+VC miss rate:"<<"\t"<<"\t"<<"\t"<<"\t"<<fixed<<setprecision(3)<<l1_miss_rate<<endl;
+	cout<<"  i. number writebacks from L1/VC:"<<"\t"<<"\t"<<"\t"<<"\t"<<l1_write_backs<<endl;
+	
+	int l2_reads = (L2 == nullptr) ? 0 : L2->reads;
+	int l2_read_misses = (L2 == nullptr) ? 0 : L2->read_misses;
+	int l2_writes = (L2 == nullptr) ? 0 : L2->writes;
+	int l2_write_misses = (L2 == nullptr) ? 0 : L2->write_misses;
+	int l2_write_backs = (L2 == nullptr) ? 0 : L2->write_backs;
+	float l2_miss_rate = (L2 == nullptr) ? 0 : static_cast<float>(l2_read_misses)/(l2_reads);
+
+	cout<<"  j. number of L2 reads:"<<"\t"<<"\t"<<"\t"<<"\t"<<l2_reads<<endl;
+	cout<<"  k. number of L2 read misses:"<<"\t"<<"\t"<<"\t"<<"\t"<<l2_read_misses<<endl;
+	cout<<"  l. number of L2 writes:"<<"\t"<<"\t"<<"\t"<<"\t"<<l2_writes<<endl;
+	cout<<"  m. number of L2 write misses:"<<"\t"<<"\t"<<"\t"<<"\t"<<l2_write_misses<<endl;
+	cout<<"  n. L2 miss rate:"<<"\t"<<"\t"<<"\t"<<"\t"<<fixed<<setprecision(3)<<l2_miss_rate<<endl;
+	cout<<"  o. number of writebacks from L2:"<<"\t"<<"\t"<<"\t"<<"\t"<<l2_write_backs<<endl;
+
+
+	int total_mem_traffic = 0;
+	
+	if(L2_SIZE > 0){
+		total_mem_traffic = l2_read_misses + l2_write_misses + l2_write_backs;
+	}else{
+		total_mem_traffic = l1_read_misses + l1_write_misses - l1_swaps + l1_write_backs;
+	}
+
+	cout<<"  p. total memory traffic:"<<"\t"<<"\t"<<"\t"<<"\t"<<total_mem_traffic<<endl;
+
+	cout<<endl;
+
+	cout<<"===== Simulation results (performance) ====="<<endl;
+
+
+	float l1_access_time = 0;
+	float l1_energy = 0;
+	float l1_area = 0;
+	float l1_avg_access_time = 0;
+
+	float vc_energy = 0;
+	float vc_area = 0;
+	
+	float edp = 0;
+	float area = 0;
+	
+	int cacti = get_cacti_results(L1_SIZE, L1_BLOCKSIZE, L1_ASSOC, 
+									&l1_access_time, &l1_energy, &l1_area);
+
+
+	
+	//cout<<"L1 Access Time: "<<l1_access_time<<"L1 Energy: "<<l1_energy<<"L1 Area: "<<l1_area<<endl;
+
+	float l2_access_time = 0;
+	float l2_energy = 0;
+	float l2_area = 0;
+	float l2_avg_access_time = 20;
+
+	float main_mem_access_time = 20;
+	float main_mem_energy = 0.05;
+	
+	if(L2_SIZE > 0){
+		cacti = get_cacti_results(L2_SIZE, L1_BLOCKSIZE, L2_ASSOC, &l2_access_time, &l2_energy, &l2_area);
+		l2_avg_access_time = l2_access_time + l2_miss_rate*main_mem_access_time;
+		//cout<<"L2 Access Time: "<<l2_access_time<<" Energy: "<<l2_energy<<" area: "<<l2_area<<endl;
+	}
+
+	l1_avg_access_time = l1_access_time + l1_miss_rate*l2_avg_access_time;
+
+	if(L2_SIZE > 0){
+		float total_energy = (l1_reads + l1_writes)*l1_energy + 
+			  (l1_read_misses + l1_write_misses)*l1_energy +
+			  2*l1_swap_requests*vc_energy;
+			  (l2_reads + l2_writes)*l2_energy + 
+			  (l2_read_misses + l2_write_misses)*l2_energy +
+			  (l2_read_misses + l2_write_misses)*main_mem_energy +
+			  l2_write_backs * main_mem_energy;
+
+		edp = total_energy * l1_avg_access_time * (l1_reads + l1_writes);
+
+	}else{
+		float total_energy = (l1_reads + l1_writes)*l1_energy + 
+			  (l1_read_misses + l1_write_misses)*l1_energy +
+			  2*l1_swap_requests*vc_energy +
+			  (l1_read_misses + l1_write_misses - l1_swaps)*main_mem_energy + 
+			  (l1_write_backs)*main_mem_energy;
+	
+		edp = total_energy * l1_avg_access_time * (l1_reads + l1_writes);
+	}
+
+	area = l1_area + l2_area + vc_area;
+
+	cout<<"1. average access time:"<<"\t"<<"\t"<<"\t"<<"\t"<<fixed<<setprecision(3)<<l1_avg_access_time<<endl;
+	cout<<"2. energy-delay product:"<<"\t"<<"\t"<<"\t"<<"\t"<<fixed<<setprecision(3)<<edp<<endl;
+	cout<<"3. total area:"<<"\t"<<"\t"<<"\t"<<"\t"<<fixed<<setprecision(3)<<area<<endl;
+
+}

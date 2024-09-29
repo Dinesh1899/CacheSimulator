@@ -41,6 +41,8 @@ private:
     int index_bits_length;
     int block_offset_bits_length;
 
+public:
+
     /////////////////////////////STATS////////////////////////////////
     int reads = 0;
     int read_misses = 0;
@@ -48,9 +50,8 @@ private:
     int write_misses = 0;
     int swap_requests = 0;
     int swaps = 0;
-    int write_backs;
+    int write_backs = 0;
 
-public:
     static const int ADDR_LENGTH = 32;
     CACHEMEMORY(/* args */);
     ~CACHEMEMORY();
@@ -77,6 +78,11 @@ public:
     bool read_request(unsigned int addr);
 
     bool write_request(unsigned int addr);
+
+    float get_swap_request_rate();
+
+    float get_miss_rate();
+
 };
 
 CACHEMEMORY::CACHEMEMORY(){}
@@ -105,6 +111,21 @@ void CACHEMEMORY::append(CACHEMEMORY* memory){
     this->next_mem = memory;
 }
 
+float CACHEMEMORY::get_swap_request_rate(){
+    float srr = (this->swap_requests)/(this->reads + this->writes);
+    return srr;
+}
+
+float CACHEMEMORY::get_miss_rate(){
+    float misses = this->read_misses + this->write_misses - this->swaps;
+    float requests = this->reads + this->writes;
+    
+    float mr = misses/requests;
+
+    //cout<<"Misses: "<<misses<<" Requests: "<<requests<<" Miss rate: "<<mr<<endl;
+
+    return mr;
+}
 
 void CACHEMEMORY::sort_each_set() {
     // int s = this->cache.size();
