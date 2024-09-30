@@ -188,7 +188,7 @@ int main(int argc, char* argv[]){
 			L2->show();
 		}
 
-		print_stats(L1, L2, L1_BLOCKSIZE, L1_SIZE, VC_NUM_BLOCKS ,L1_ASSOC, L2_ASSOC, L2_SIZE);
+		print_stats(L1, L2, L1_BLOCKSIZE, L1_SIZE, L1_ASSOC, VC_NUM_BLOCKS, L2_ASSOC, L2_SIZE);
 
 	}
 
@@ -319,7 +319,7 @@ void print_stats(CACHEMEMORY* L1, CACHEMEMORY* L2, unsigned int L1_BLOCKSIZE, un
 
 
 void print_stats(L1VC* L1, CACHEMEMORY* L2, unsigned int L1_BLOCKSIZE, unsigned int L1_SIZE, unsigned int L1_ASSOC, unsigned int VC_NUM_BLOCKS, unsigned int L2_ASSOC, unsigned int L2_SIZE){
-
+	
 	int l1_reads = L1->reads;
 	int l1_read_misses = L1->read_misses;
 	int l1_writes = L1->writes;
