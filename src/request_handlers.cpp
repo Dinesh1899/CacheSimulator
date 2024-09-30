@@ -161,6 +161,7 @@ int L1VC::evict_lru_from_vc(){
         if(this->vc[lru_idx].is_dirty){
             unsigned int addr = this->vc[lru_idx].block_offset;
             if(next_mem != nullptr){
+                this->write_backs++;
                 this->next_mem->write_request(addr);
             }
         }
@@ -194,6 +195,7 @@ void L1VC::insert_block_in_vc(CACHEBLOCK new_block, int pos){
 
 bool L1VC::read_request(unsigned int addr){
     // Get the cache line from addr and index mask
+    this->reads++;
     int idx = get_masked_data(addr, this->index_mask, this->block_offset_bits_length);
     int block_addr = get_masked_data(addr, this->block_addr_mask, this->block_offset_bits_length);
     // //Debug
@@ -210,9 +212,10 @@ bool L1VC::read_request(unsigned int addr){
         // insert new block
         // update lru
         // return false
-
+        this->read_misses++;
         if(is_cache_full(idx)){
             // line is full --> evict block
+            this->swap_requests++;
             CACHEBLOCK evicted_block = get_lru_block(idx);
             
             //search in vc
@@ -233,6 +236,7 @@ bool L1VC::read_request(unsigned int addr){
                 insert_block_replace_invalid_block_and_update_lru(idx, requested_block, true);
                 return false; 
             }else{
+                this->swaps++;
                 //vc hit
                 //swap vc block with L1
                 requested_block.is_dirty = this->vc[vc_idx].is_dirty;
@@ -249,10 +253,6 @@ bool L1VC::read_request(unsigned int addr){
             }
 
 
-            if(this->next_mem != nullptr && evicted_block.is_dirty){ 
-                unsigned int write_back_addr = evicted_block.block_offset;
-                this->next_mem->write_request(write_back_addr);
-            }
         }else{
             // fetch from next level
             if(this->next_mem != nullptr){
@@ -273,6 +273,7 @@ bool L1VC::read_request(unsigned int addr){
 }
 
 bool L1VC::write_request(unsigned int addr){
+    this->writes++;
     // Get the cache line from addr and index mask
     int idx = get_masked_data(addr, this->index_mask, this->block_offset_bits_length);
     int block_addr = get_masked_data(addr, this->block_addr_mask, this->block_offset_bits_length);
@@ -290,8 +291,9 @@ bool L1VC::write_request(unsigned int addr){
         // insert new block
         // update lru
         // return false
-
+        this->write_misses++;
         if(is_cache_full(idx)){
+            this->swap_requests++;
             // line is full --> evict block
             CACHEBLOCK evicted_block = get_lru_block(idx);
             
@@ -313,6 +315,7 @@ bool L1VC::write_request(unsigned int addr){
                 insert_block_replace_invalid_block_and_update_lru(idx, requested_block, true);
                 return false; 
             }else{
+                this->swaps++;
                 //vc hit
                 //swap vc block with L1
                 //Write request block is anyways dirty
