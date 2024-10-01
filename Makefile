@@ -3,7 +3,7 @@ CXX = g++
 
 
 # Define the target executable
-TARGET = sim_cache
+TARGET = cache_sim
 
 # Define the source files
 SRCS = src/$(TARGET).cpp src/request_handlers.cpp src/victim.cpp src/cache_mem.cpp
@@ -19,7 +19,7 @@ L1_BLOCKSIZE = 16
 VC_NUM_BLOCKS = 0
 L2_SIZE = 8192
 L2_ASSOC = 4
-TRACEFILE = gcc_trace.txt
+TRACEFILE = samples/traces/gcc_trace.txt
 
 # Default target
 all: $(TARGET)
