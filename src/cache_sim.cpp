@@ -90,8 +90,8 @@ int main(int argc, char* argv[]){
 		}
 
 		// Open the trace file
-		string trace_file_dir = "samples/traces/";
-		string trace_file_path = trace_file_dir + tracefile;
+		//string trace_file_dir = "samples/traces/";
+		string trace_file_path = tracefile;
 		ifstream file(trace_file_path);
 		if (!file.is_open()) {
 			cerr << "Unable to open file!" << endl;
@@ -145,8 +145,8 @@ int main(int argc, char* argv[]){
 		}
 
 		// Open the trace file
-		string trace_file_dir = "samples/traces/";
-		string trace_file_path = trace_file_dir + tracefile;
+		//string trace_file_dir = "samples/traces/";
+		string trace_file_path = tracefile;
 		ifstream file(trace_file_path);
 		if (!file.is_open()) {
 			cerr << "Unable to open file!" << endl;
@@ -319,7 +319,7 @@ void print_stats(CACHEMEMORY* L1, CACHEMEMORY* L2, unsigned int L1_BLOCKSIZE, un
 
 
 void print_stats(L1VC* L1, CACHEMEMORY* L2, unsigned int L1_BLOCKSIZE, unsigned int L1_SIZE, unsigned int L1_ASSOC, unsigned int VC_NUM_BLOCKS, unsigned int L2_ASSOC, unsigned int L2_SIZE){
-	
+
 	int l1_reads = L1->reads;
 	int l1_read_misses = L1->read_misses;
 	int l1_writes = L1->writes;
