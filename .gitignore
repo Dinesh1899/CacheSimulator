@@ -2,6 +2,6 @@
 .vscode/
 logs/
 build/
-objects/
+objects/*.o
 sim_cache
 cache_sim
