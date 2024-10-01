@@ -3,5 +3,5 @@
 logs/
 build/
 objects/
-src/sim_cache
+sim_cache
 cache_sim
